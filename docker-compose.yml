@@ -1,0 +1,51 @@
+version: "3"
+services:
+  db:
+    image: mariadb:10.5
+    working_dir: /application
+    command:
+      [
+        mysqld,
+        --character-set-server=utf8mb4,
+        --collation-server=utf8mb4_unicode_ci,
+        --innodb-file-format=Barracuda,
+        --innodb-large-prefix=1,
+        --innodb-file-per-table=1,
+      ]
+    ports:
+      - 33406:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=rest
+      - MYSQL_DATABASE=api_rest_stack_overflow
+      - MYSQL_USER=api
+      - MYSQL_PASSWORD=rest
+    networks:
+      - symfony-template
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - 8060:80
+    volumes:
+      - .:/var/www/html:rw
+      - .docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - symfony-template
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: dev
+      APP_SECRET: d5d95fcd53207a4001dd388251e5bd7b
+      DATABASE_URL: "mysql://api:rest@db:3306/api_rest_stack_overflow?serverVersion=mariadb-10.5.12"
+    volumes:
+      - ./:/var/www/html/
+    networks:
+      - symfony-template
+    depends_on:
+      - db
+
+networks:
+  symfony-template:
