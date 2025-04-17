@@ -1,7 +1,7 @@
 version: "3"
 services:
   db:
-    image: mariadb:10.5
+    image: mariadb:10.11.2
     working_dir: /application
     command:
       [
@@ -15,10 +15,10 @@ services:
     ports:
       - 33406:3306
     environment:
-      - MYSQL_ROOT_PASSWORD=rest
+      - MYSQL_ROOT_PASSWORD=admin
       - MYSQL_DATABASE=api_rest_stack_overflow
-      - MYSQL_USER=api
-      - MYSQL_PASSWORD=rest
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=admin
     networks:
       - symfony-template
 
@@ -39,7 +39,7 @@ services:
     environment:
       APP_ENV: dev
       APP_SECRET: d5d95fcd53207a4001dd388251e5bd7b
-      DATABASE_URL: "mysql://api:rest@db:3306/api_rest_stack_overflow?serverVersion=mariadb-10.5.12"
+      DATABASE_URL: "mysql://root:admin@db:3306/api_rest_stack_overflow?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
     volumes:
       - ./:/var/www/html/
     networks:

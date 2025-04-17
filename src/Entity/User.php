@@ -15,10 +15,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: "uuid")]
     #[Assert\Uuid]
-    private ?Uuid $id;
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\Blank]
@@ -58,6 +57,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updated_at = null;
 
+    public function __construct()
+    {
+        $this->id = Uuid::v4();
+        $this->is_active = false;
+        $this->is_deleted = false;
+    }
 
     public function getId(): ?Uuid
     {
