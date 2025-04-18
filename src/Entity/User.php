@@ -2,13 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\UserRepository;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -17,17 +18,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\Column(type: "uuid")]
     #[Assert\Uuid]
+    #[Groups(['user:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\Blank]
     #[Assert\Email(message: 'The email {{ value }} is not a valid email.')]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:write'])]
     private array $roles = [];
 
     /**
@@ -35,26 +39,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Assert\Blank]
+    #[Groups(['user:write'])]
     private ?string $password = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\Blank]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $first_name = null;
 
     #[Assert\Blank]
     #[ORM\Column(length: 200)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $last_name = null;
 
     #[ORM\Column]
+    #[Groups(['user:write'])]
     private ?bool $is_active = null;
 
     #[ORM\Column]
+    #[Groups(['user:write'])]
     private ?bool $is_deleted = null;
 
     #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:write'])]
     private ?\DateTimeImmutable $updated_at = null;
 
     public function __construct()
@@ -62,6 +73,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->id = Uuid::v4();
         $this->is_active = false;
         $this->is_deleted = false;
+        $this->created_at = new DateTimeImmutable('now');
+        $this->roles = $this->getRoles();
     }
 
     public function getId(): ?Uuid
