@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Api;
 
 use App\DTO\UserDTO;
 use App\Entity\User;
@@ -30,7 +30,7 @@ final class UserController extends AbstractController
 
     }
 
-    #[Route('/api/user/all', name: 'api_all_users', methods: 'GET')]
+    #[Route('/user/all', name: 'api_all_users', methods: 'GET')]
     public function index(): JsonResponse
     {
         $users = $this->em->getRepository(User::class)->findAll();
@@ -38,7 +38,7 @@ final class UserController extends AbstractController
         return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
     }
 
-    #[Route('/api/user/view/{pk}', name: 'api_view_user', methods: 'GET')]
+    #[Route('/user/view/{pk}', name: 'api_view_user', methods: 'GET')]
     public function detail(Request $request, $pk)
     {
         if (Uuid::isValid($pk)) {
@@ -55,7 +55,7 @@ final class UserController extends AbstractController
         return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_BAD_REQUEST);
     }
 
-    #[Route('/api/user/create', name: 'api_create_user', methods: 'POST')]
+    #[Route('/user/create', name: 'api_create_user', methods: 'POST')]
     public function new(Request $request) 
     {
         if ($request->isMethod('POST')) {
@@ -88,7 +88,7 @@ final class UserController extends AbstractController
 
     }
 
-    #[Route('/api/user/edit', name: 'api_edit_user', methods: 'POST')]
+    #[Route('/user/edit', name: 'api_edit_user', methods: 'POST')]
     public function edit(Request $request) 
     {
         if ($request->isMethod('POST')) {
@@ -121,7 +121,7 @@ final class UserController extends AbstractController
 
     }
 
-    #[Route('/api/user/delete', name: 'api_delete_user', methods: ['POST'])]
+    #[Route('/user/delete', name: 'api_delete_user', methods: ['POST'])]
     public function delete(Request $request) 
     {
         if ($request->isMethod('POST')) {

@@ -15,8 +15,6 @@ class UniqueEmailValidator extends ConstraintValidator
         ### To obtain all the attributes of the DTO
         $dto = $this->context->getObject();
         $userByEmail = $this->userRepository->findOneBy(['email' => $value]);
-
-
         
         if ($userByEmail && $userByEmail->getId() != $dto->getId()) {
             $this->context->buildViolation($constraint->message)
