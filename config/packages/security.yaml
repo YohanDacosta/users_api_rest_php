@@ -28,6 +28,7 @@ security:
       pattern:   ^/api
       stateless: true
       jwt: ~
+      entry_point: jwt
 
       # activate different ways to authenticate
       # https://symfony.com/doc/current/security.html#the-firewall
@@ -41,6 +42,7 @@ security:
     # - { path: ^/admin, roles: ROLE_ADMIN }
     # - { path: ^/profile, roles: ROLE_USER }
     - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    - { path: ^/api/user/create, roles: PUBLIC_ACCESS }
     - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
 
   # Roles
