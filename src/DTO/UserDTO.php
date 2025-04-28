@@ -4,7 +4,7 @@ namespace App\DTO;
 
 use App\Validator\Constraints as AppAssert;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -31,6 +31,14 @@ class UserDTO
 
     #[Assert\NotBlank(message: 'The confirm_password field should not be blank.', groups: ['user:create'])]
     private string $confirm_password;
+
+    #[Assert\File(
+        maxSize: "2M",
+        mimeTypes: ["image/jpeg", "image/png"],
+        mimeTypesMessage: "Only images of type JPG o PNG.",
+        maxSizeMessage: "The image must not be major than 2MB."
+    )]
+    private ?File $image = null;
 
     #[Assert\Callback(groups: ['user:create'])]
     private function validate(ExecutionContextInterface $context): void

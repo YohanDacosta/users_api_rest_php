@@ -5,16 +5,16 @@ namespace App\Controller\Api;
 use App\DTO\UserDTO;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Uid\Uuid;
 
 final class UserController extends AbstractController
 {
@@ -197,6 +197,49 @@ final class UserController extends AbstractController
     
                     return new JsonResponse(['errors' => false, 'data' => null], Response::HTTP_NO_CONTENT);
                 }
+            }
+
+            return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_BAD_REQUEST);
+        }
+
+        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Access denied. You do not have permission to access this resource.'], Response::HTTP_FORBIDDEN);
+    }
+
+    #[Route('/user/upload_image')]
+    public function upload(Request $request)
+    {
+        if ($this->isGranted('ROLE_USER')) {
+
+            if ($request->getMethod('POST')) {
+                /** @var UploadedFile $file */
+                $image = $request->files->get('image');
+        
+                if ($image) {
+                    $userDTO = $this->serializer->deserialize(json_encode($request->request->all()), UserDTO::class, 'json');
+                    $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+        
+                    if (count($errors) > 0) {
+                        $errorList = [];
+        
+                        foreach ($errors as $error) {
+                            $errorList[$error->getPropertyPath()] = $error->getMessage();
+                        }
+        
+                        return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+                    }
+        
+                    $user = $this->em->getRepository(User::class)->findOneBy(['id' => $userDTO->getId()]);
+
+                    if ($user) {
+                        $user->setImage($image);
+                        $this->em->persist($user);
+                        $this->em->flush();
+
+                        return new JsonResponse(['errors' => false, 'data' => $user->getImageName()], Response::HTTP_OK);
+                    }
+                }
+        
+                return new JsonResponse(['errors' => true, 'messages' =>'No file uploaded', 'data' => null], Response::HTTP_BAD_REQUEST);
             }
 
             return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_BAD_REQUEST);
