@@ -1,10 +1,14 @@
 controllers:
-    resource:
-        path: ../src/Controller/Api/
-        namespace: App\Controller\Api
-    type: attribute
-    prefix: /api
+  resource:
+    path: ../src/Controller/Api/
+    namespace: App\Controller\Api
+  type: attribute
+  prefix: /api
 
 api_login_check:
-    path: /api/login
-    methods: [POST]
+  path: /api/login
+  methods: [POST]
+
+api_validate_token:
+  path: /api/token/validate
+  methods: [POST]

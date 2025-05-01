@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 final class UserController extends AbstractController
 {
@@ -29,6 +30,23 @@ final class UserController extends AbstractController
         $this->validator = $validator;
         $this->passwordHasher = $passwordHasher;
 
+    }
+
+    #[Route('/token/validate', name:"token_validate")]
+    public function validate(UserInterface $user) 
+    {
+        if (!$user instanceof UserInterface) {
+           return;
+        }
+
+        $_user = array(
+            'firstname' => $user->getFirstName(),
+            'lastname' => $user->getLastName(),
+            'email' => $user->getEmail(),
+            'image' => $user->getImageName(),
+        );
+
+        return new JsonResponse(['errors' => false, 'data' => $_user], Response::HTTP_OK); 
     }
 
     #[Route('/user/all', name: 'api_all_users', methods: 'GET')]
