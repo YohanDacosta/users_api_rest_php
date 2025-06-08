@@ -2,7 +2,9 @@
 
 namespace App\Controller\Api;
 
+use App\DTO\EventDTO;
 use App\DTO\UserDTO;
+use App\Entity\Event;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -265,4 +267,54 @@ final class UserController extends AbstractController
 
         return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Access denied. You do not have permission to access this resource.'], Response::HTTP_FORBIDDEN);
     }
+
+    #[Route('/user/saved_event/{pk}', name: 'api_saved_event', methods: 'GET')]
+    public function saved_event_by_id(Request $request, $pk)
+    {
+            $userDTO = new UserDTO();
+            $userDTO->setId($pk);
+            $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+
+            if (count($errors) > 0) {
+                $errorList = [];
+
+                foreach ($errors as $error) {
+                    $errorList[$error->getPropertyPath()] = $error->getMessage();
+                }
+
+                return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+            }
+
+            $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+
+            if ($user) {
+                $eventDTO = $this->serializer->deserialize($request->getContent(), EventDTO::class, 'json');
+                $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
+
+                if (count($errors) > 0) {
+                    $errorList = [];
+
+                    foreach ($errors as $error) {
+                        $errorList[$error->getPropertyPath()] = $error->getMessage();
+                    }
+
+                    return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+                }
+
+                $event = $this->em->getRepository(Event::class)->findOneBy(['id' => $eventDTO->getId()]);
+
+                if ($event) {
+                    $user->addSavedEvent($event);
+                    $this->em->persist($user);
+                    $this->em->flush();
+
+                    return new JsonResponse(['errors' => false, 'data' => []], Response::HTTP_OK);
+                }
+
+                return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Event does not exist.'], Response::HTTP_NOT_FOUND);
+            }
+
+            return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'User does not exist.'], Response::HTTP_NOT_FOUND);
+        }
+
 }

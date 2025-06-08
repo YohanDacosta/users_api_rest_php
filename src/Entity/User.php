@@ -91,9 +91,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private Collection $attendee_events_id;
 
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['user:read'])]
-    private ?array $saved_events_id = null;
+    /**
+     * @var Collection<int, Event>
+     */
+    #[ORM\ManyToMany(targetEntity: Event::class, inversedBy: 'saved_users')]
+    private Collection $saved_events;
 
     public function __construct()
     {
@@ -103,6 +105,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->created_at = new DateTimeImmutable('now');
         $this->roles = $this->getRoles();
         $this->attendee_events_id = new ArrayCollection();
+        $this->saved_events = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -318,14 +321,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getSavedEventsId(): ?array
+    /**
+     * @return Collection<int, Event>
+     */
+    public function getSavedEvents(): Collection
     {
-        return $this->saved_events_id;
+        return $this->saved_events;
     }
 
-    public function setSavedEventsId(?array $saved_events_id): static
+    public function addSavedEvent(Event $savedEvent): static
     {
-        $this->saved_events_id = $saved_events_id;
+        if (!$this->saved_events->contains($savedEvent)) {
+            $this->saved_events->add($savedEvent);
+        }
+
+        return $this;
+    }
+
+    public function removeSavedEvent(Event $savedEvent): static
+    {
+        $this->saved_events->removeElement($savedEvent);
 
         return $this;
     }
