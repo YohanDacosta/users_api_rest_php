@@ -3,6 +3,9 @@
 namespace App\Entity;
 
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
@@ -66,6 +69,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Vich\UploadableField(mapping: 'user', fileNameProperty: 'imageName', size: 'imageSize')]
     private ?File $image = null;
 
+    #[Groups(['user:read'])]
     #[ORM\Column(nullable: true)]
     private ?string $imageName = null;
 
@@ -80,6 +84,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:write'])]
     private ?\DateTimeImmutable $updated_at = null;
 
+    /**
+     * @var Collection<int, Event>
+     */
+    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'attendee_users_id')]
+    #[Groups(['user:read'])]
+    private Collection $attendee_events_id;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['user:read'])]
+    private ?array $saved_events_id = null;
+
     public function __construct()
     {
         $this->id = Uuid::v4();
@@ -87,6 +102,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->is_deleted = false;
         $this->created_at = new DateTimeImmutable('now');
         $this->roles = $this->getRoles();
+        $this->attendee_events_id = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -271,6 +287,45 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUpdatedAt(?\DateTimeImmutable $updated_at): static
     {
         $this->updated_at = $updated_at;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Event>
+     */
+    public function getAttendeeEventsId(): Collection
+    {
+        return $this->attendee_events_id;
+    }
+
+    public function addAttendeeEventsId(Event $attendeeEventsId): static
+    {
+        if (!$this->attendee_events_id->contains($attendeeEventsId)) {
+            $this->attendee_events_id->add($attendeeEventsId);
+            $attendeeEventsId->addAttendeeUsersId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAttendeeEventsId(Event $attendeeEventsId): static
+    {
+        if ($this->attendee_events_id->removeElement($attendeeEventsId)) {
+            $attendeeEventsId->removeAttendeeUsersId($this);
+        }
+
+        return $this;
+    }
+
+    public function getSavedEventsId(): ?array
+    {
+        return $this->saved_events_id;
+    }
+
+    public function setSavedEventsId(?array $saved_events_id): static
+    {
+        $this->saved_events_id = $saved_events_id;
 
         return $this;
     }

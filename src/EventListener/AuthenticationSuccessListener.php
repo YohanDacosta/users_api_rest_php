@@ -12,6 +12,7 @@ class AuthenticationSuccessListener {
      */
     public function onAuthenticationSuccessResponse(AuthenticationSuccessEvent $event)
     {
+        $isStaff = false;
         $data = $event->getData();
         $user = $event->getUser();
 
@@ -19,11 +20,17 @@ class AuthenticationSuccessListener {
             return;
         }
 
+        if (in_array('ROLE_ADMIN', $user->getRoles(), true) || in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
+           $isStaff = true;
+        }
+
         $data['user'] = array(
+            'id' => $user->getId(),
             'firstname' => $user->getFirstName(),
             'lastname' => $user->getLastName(),
             'email' => $user->getEmail(),
             'image' => $user->getImageName(),
+            'isStaff' => $isStaff,
         );
 
         $event->setData($data);
