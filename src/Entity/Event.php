@@ -20,7 +20,7 @@ class Event
     #[ORM\Id]
     #[ORM\Column(type: "uuid")]
     #[Assert\Uuid]
-    #[Groups(['event:read'])]
+    #[Groups(['event:read', 'user:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
@@ -56,6 +56,7 @@ class Event
      * @var Collection<int, User>
      */
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'attendee_events_id')]
+    #[Groups(['event:read'])]
     private Collection $attendee_users_id;
 
     #[ORM\Column]
@@ -70,6 +71,7 @@ class Event
      * @var Collection<int, User>
      */
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'saved_events')]
+    #[Groups(['event:read'])]
     private Collection $saved_users;
 
     public function __construct()

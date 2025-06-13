@@ -155,12 +155,12 @@ final class UserController extends AbstractController
 
     }
 
-    #[Route('/user/delete', name: 'api_delete_user', methods: ['POST'])]
+    #[Route('/user/delete', name: 'api_delete_user', methods: 'DELETE')]
     public function delete(Request $request) 
     {
         if ($this->isGranted('ROLE_ADMIN')) {
 
-            if ($request->isMethod('POST')) {
+            if ($request->isMethod('DELETE')) {
                 $userDTO = $this->serializer->deserialize($request->getContent(), UserDTO::class, 'json');
                 $errors = $this->validator->validate($userDTO, null, ['user:validate']);
     
@@ -271,9 +271,25 @@ final class UserController extends AbstractController
     #[Route('/user/saved_event/{pk}', name: 'api_saved_event', methods: 'GET')]
     public function saved_event_by_id(Request $request, $pk)
     {
-            $userDTO = new UserDTO();
-            $userDTO->setId($pk);
-            $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+        $userDTO = new UserDTO();
+        $userDTO->setId($pk);
+        $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+
+        if (count($errors) > 0) {
+            $errorList = [];
+
+            foreach ($errors as $error) {
+                $errorList[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+
+        if ($user) {
+            $eventDTO = $this->serializer->deserialize($request->getContent(), EventDTO::class, 'json');
+            $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
 
             if (count($errors) > 0) {
                 $errorList = [];
@@ -285,36 +301,177 @@ final class UserController extends AbstractController
                 return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
             }
 
-            $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+            $event = $this->em->getRepository(Event::class)->findOneBy(['id' => $eventDTO->getId()]);
 
-            if ($user) {
-                $eventDTO = $this->serializer->deserialize($request->getContent(), EventDTO::class, 'json');
-                $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
+            if ($event) {
+                $user->addSavedEvent($event);
+                $this->em->persist($user);
+                $this->em->flush();
 
-                if (count($errors) > 0) {
-                    $errorList = [];
+                $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
 
-                    foreach ($errors as $error) {
-                        $errorList[$error->getPropertyPath()] = $error->getMessage();
-                    }
-
-                    return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
-                }
-
-                $event = $this->em->getRepository(Event::class)->findOneBy(['id' => $eventDTO->getId()]);
-
-                if ($event) {
-                    $user->addSavedEvent($event);
-                    $this->em->persist($user);
-                    $this->em->flush();
-
-                    return new JsonResponse(['errors' => false, 'data' => []], Response::HTTP_OK);
-                }
-
-                return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Event does not exist.'], Response::HTTP_NOT_FOUND);
+                return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
             }
 
-            return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'User does not exist.'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Event does not exist.'], Response::HTTP_NOT_FOUND);
         }
 
+        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'User does not exist.'], Response::HTTP_NOT_FOUND);
+    }
+    
+    #[Route('/user/unsaved_event/{pk}', name: 'api_unsaved_event', methods: 'GET')]
+    public function unsaved_event_by_id(Request $request, $pk) 
+    {
+        $userDTO = new UserDTO();
+        $userDTO->setId($pk);
+
+        $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+
+        if (count($errors) > 0) {
+            $errorList = [];
+
+            foreach ($errors as $error) {
+                $errorList[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+
+        if ($user) {
+            $eventDTO = $this->serializer->deserialize($request->getContent(), EventDTO::class, 'json');
+            $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
+
+            if (count($errors) > 0) {
+                $errorList = [];
+
+                foreach ($errors as $error) {
+                    $errorList[$error->getPropertyPath()] = $error->getMessage();
+                }
+
+                return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+            }
+
+            $event = $this->em->getRepository(Event::class)->findOneBy(['id' => $eventDTO->getId()]);
+
+            if ($event) {
+                $user->removeSavedEvent($event);
+                $this->em->persist($user);
+                $this->em->flush();
+
+                $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
+
+                return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
+            }
+
+            return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Event does not exist.'], Response::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'User does not exist.'], Response::HTTP_NOT_FOUND);
+    }
+
+    #[Route('/user/attendee_event/{pk}', name: 'api_attendee_event', methods: 'GET')]
+    public function attendee_event_by_id(Request $request, $pk)
+    {
+        $userDTO = new UserDTO();
+        $userDTO->setId($pk);
+
+        $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+
+        if (count($errors) > 0) {
+            $errorList = [];
+
+            foreach ($errors as $error) {
+                $errorList[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+
+        if ($user) {
+            $eventDTO = $this->serializer->deserialize($request->getContent(), EventDTO::class, 'json');
+            $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
+
+            if (count($errors) > 0) {
+                $errorList = [];
+
+                foreach ($errors as $error) {
+                    $errorList[$error->getPropertyPath()] = $error->getMessage();
+                }
+
+                return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+            }
+
+            $event = $this->em->getRepository(Event::class)->findOneBy(['id' => $eventDTO->getId()]);
+
+            if ($event) {
+                $user->addAttendeeEventsId($event);
+                $this->em->persist($user);
+                $this->em->flush();
+
+                $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
+
+                return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
+            }
+
+            return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Event does not exist.'], Response::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'User does not exist.'], Response::HTTP_NOT_FOUND);
+    }
+
+        #[Route('/user/unattended_event/{pk}', name: 'api_unattended_event', methods: 'GET')]
+    public function unattended_event_by_id(Request $request, $pk) 
+    {
+        $userDTO = new UserDTO();
+        $userDTO->setId($pk);
+
+        $errors = $this->validator->validate($userDTO, null, ['user:validate']);
+
+        if (count($errors) > 0) {
+            $errorList = [];
+
+            foreach ($errors as $error) {
+                $errorList[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+
+        if ($user) {
+            $eventDTO = $this->serializer->deserialize($request->getContent(), EventDTO::class, 'json');
+            $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
+
+            if (count($errors) > 0) {
+                $errorList = [];
+
+                foreach ($errors as $error) {
+                    $errorList[$error->getPropertyPath()] = $error->getMessage();
+                }
+
+                return new JsonResponse(['errors' => true, 'message' => $errorList, 'data' => null], Response::HTTP_BAD_REQUEST);
+            }
+
+            $event = $this->em->getRepository(Event::class)->findOneBy(['id' => $eventDTO->getId()]);
+
+            if ($event) {
+                $user->removeAttendeeEventsId($event);
+                $this->em->persist($user);
+                $this->em->flush();
+
+                $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
+
+                return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
+            }
+
+            return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Event does not exist.'], Response::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'User does not exist.'], Response::HTTP_NOT_FOUND);
+    }
 }

@@ -24,7 +24,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\Column(type: "uuid")]
     #[Assert\Uuid]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'event:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
@@ -95,6 +95,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Event>
      */
     #[ORM\ManyToMany(targetEntity: Event::class, inversedBy: 'saved_users')]
+    #[Groups(['user:read'])]
     private Collection $saved_events;
 
     public function __construct()
