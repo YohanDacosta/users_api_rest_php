@@ -34,6 +34,7 @@ final class UserController extends AbstractController
 
     }
 
+    /** Validation of the token JWT */
     #[Route('/token/validate', name:"token_validate")]
     public function validate(UserInterface $user) 
     {
@@ -48,41 +49,69 @@ final class UserController extends AbstractController
             'image' => $user->getImageName(),
         );
 
-        return new JsonResponse(['errors' => false, 'data' => $_user], Response::HTTP_OK); 
+        return $this->json([
+            'errors' => false, 
+            'data' => $_user
+        ], Response::HTTP_OK); 
     }
 
+    /** Show all users */
     #[Route('/user/all', name: 'api_all_users', methods: 'GET')]
     public function index(): JsonResponse
     {
-        if ($this->isGranted('ROLE_ADMIN')) {
-            $users = $this->em->getRepository(User::class)->findAll();
-            $serializered = $this->serializer->serialize($users, 'json', ['groups' => 'user:read']);
-            return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return $this->json([
+                'errors' => true, 
+                'message' => 'Access denied. You do not have permission to access this resource.',
+                'data' => null
+            ], Response::HTTP_FORBIDDEN);
         } 
-        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Access denied. You do not have permission to access this resource.'], Response::HTTP_FORBIDDEN);
+
+        $users = $this->em->getRepository(User::class)->findAll();
+        $serializered = $this->serializer->serialize(
+            $users, 
+            'json', 
+            ['groups' => 'user:read']
+        );
+        
+        return $this->json([
+            'errors' => false, 
+            'message' => null, 
+            'data' => json_decode($serializered)
+        ], Response::HTTP_OK);
     }
 
+    /** Show an user by user ID */
     #[Route('/user/view/{pk}', name: 'api_view_user', methods: 'GET')]
     public function detail(Request $request, $pk)
     {
-        if ($this->isGranted('ROLE_USER')) {
-            
-            if (Uuid::isValid($pk)) {
-                $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
-    
-                if ($user) {
-                    $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
-    
-                    return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
-                }
-    
-                return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_NOT_FOUND);
-            }
-            return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_BAD_REQUEST);
+        if (!$this->isGranted('ROLE_USER')) {
+            return new JsonResponse([
+                'errors' => true, 
+                'message' => 'Access denied. You do not have permission to access this resource.',
+                'data' => null
+            ], Response::HTTP_FORBIDDEN);
         }
 
-        return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Access denied. You do not have permission to access this resource.'], Response::HTTP_FORBIDDEN);
-    }
+        if (!Uuid::isValid($pk)) {
+            return new JsonResponse([
+                'errors' => true, 
+                'message' => null,
+                'data' => null
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->em->getRepository(User::class)->findOneBy(['id' => $pk]);
+
+        if ($user) {
+            $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
+
+            return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_OK);
+        }
+
+            return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_NOT_FOUND);
+        }
+        
 
     #[Route('/user/create', name: 'api_create_user', methods: 'POST')]
     public function new(Request $request) 
@@ -262,7 +291,7 @@ final class UserController extends AbstractController
                 return new JsonResponse(['errors' => true, 'messages' =>'No file uploaded', 'data' => null], Response::HTTP_BAD_REQUEST);
             }
 
-            return new JsonResponse(['errors' => true, 'data' => null], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['errors' => true, 'messages' => 'Method Not Allowed. Use POST instead.', 'data' => null], Response::HTTP_METHOD_NOT_ALLOWED);
         }
 
         return new JsonResponse(['errors' => true, 'data' => null, 'message' => 'Access denied. You do not have permission to access this resource.'], Response::HTTP_FORBIDDEN);

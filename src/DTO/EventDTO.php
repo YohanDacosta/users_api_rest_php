@@ -27,7 +27,7 @@ class EventDTO
         mimeTypes: ["image/jpeg", "image/jpg", "image/png"],
         mimeTypesMessage: "Only images of type (jpeg, JPEG , PNG).",
         maxSizeMessage: "The image must not be major than 2MB.",
-        groups: ['event:create', 'event:update']
+        groups: ['event:create', 'event:validate']
     )]
     private ?File $imageFile = null;
 
