@@ -19,7 +19,7 @@ class UserDTO
     #[Assert\NotBlank(message: 'The last_name field should not be blank.', groups: ['user:create', 'user:update'])]
     private string $last_name;
 
-    #[Assert\NotBlank(message: 'Email should not be blank.', groups: ['user:create'])]
+    #[Assert\NotBlank(message: 'Email should not be blank.', groups: ['user:create', 'user:update'])]
     #[Assert\Email(message: 'The email field {{ value }} is not a valid email.', groups: ['user:create'])]
     #[AppAssert\UniqueEmail(groups: ['user:create', 'user:update'])]
     private string $email;
@@ -35,9 +35,10 @@ class UserDTO
         maxSize: "2M",
         mimeTypes: ["image/jpeg", "image/png"],
         mimeTypesMessage: "Only images of type JPG o PNG.",
-        maxSizeMessage: "The image must not be major than 2MB."
+        maxSizeMessage: "The image must not be major than 2MB.",
+        groups: ['event:create', 'event:validate']
     )]
-    private ?File $image = null;
+    private ?File $imageFile = null;
 
     #[Assert\Callback(groups: ['user:create'])]
     private function validate(ExecutionContextInterface $context): void
@@ -113,5 +114,16 @@ class UserDTO
     {
         $this->confirm_password = $value;
         return $this->confirm_password;
+    }
+
+    public function getImage()
+    {
+        return $this->imageFile;
+    }
+
+    public function setImage(?File $image)
+    {
+        $this->imageFile = $image;
+        return $this->imageFile;
     }
 }

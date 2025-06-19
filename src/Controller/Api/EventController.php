@@ -4,6 +4,8 @@ namespace App\Controller\Api;
 
 use App\Entity\Event;
 use App\DTO\EventDTO;
+use App\Helpers\Constants;
+use App\Helpers\Helpers;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,7 +37,8 @@ final class EventController extends AbstractController
 
         $serializered = $this->serializer->serialize(
             $events, 
-            'json', ['groups' => 'event:read']
+            'json', 
+            ['groups' => 'event:read']
         );
 
         return $this->json([
@@ -52,7 +55,7 @@ final class EventController extends AbstractController
         if (!$this->isGranted('ROLE_ADMIN')) {
             return new JsonResponse([
                 'errors' => true, 
-                'message' => 'Access denied. You do not have permission to access this resource.',
+                'message' => Constants::ERROR_DENIED_ACCESS,
                 'data' => null
             ], Response::HTTP_FORBIDDEN);
         }
@@ -67,7 +70,8 @@ final class EventController extends AbstractController
         } catch (\Throwable $e) {
             return $this->json([
                 'errors' => true, 
-                'message' => 'Invalid input format.'
+                'message' => Constants::ERROR_INVALID_FORMAT,
+                'data' => null
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -77,16 +81,16 @@ final class EventController extends AbstractController
         if ($image) {
             $eventDTO->setImage($image);
         }
-        $errors = $this->validator->validate($eventDTO, null, ['event:create']);
+        $validatedEvent = $this->validator->validate($eventDTO, null, ['event:create']);
 
-        if (count($errors) > 0) {
-            $errorList = [];
+        $errors = Helpers::errorsPropertiesValidation($validatedEvent);
 
-            foreach ($errors as $error) {
-                $errorList[$error->getPropertyPath()] = $error->getMessage();
-            }
-
-            return new JsonResponse(['errors' => true, 'data' => null, 'message' => $errorList], Response::HTTP_BAD_REQUEST);
+        if ($errors) {
+            return $this->json([
+                'errors' => true, 
+                'message' => $errors, 
+                'data' => null
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         $event = new Event();
@@ -101,7 +105,11 @@ final class EventController extends AbstractController
 
         $serializered = $this->serializer->serialize($event, 'json', ['groups' => 'event:read']);
         
-        return new JsonResponse(['errors' => false, 'data' => json_decode($serializered)], Response::HTTP_CREATED);
+        return $this->json([
+            'errors' => false, 
+            'message' => null, 
+            'data' => json_decode($serializered)
+        ], Response::HTTP_CREATED);
     }
 
     /** Upload image by event ID */
@@ -111,7 +119,7 @@ final class EventController extends AbstractController
         if (!$this->isGranted('ROLE_ADMIN')) {
             return new JsonResponse([
                 'errors' => true, 
-                'message' => 'Access denied. You do not have permission to access this resource.',
+                'message' => Constants::ERROR_DENIED_ACCESS,
                 'data' => null
             ], Response::HTTP_FORBIDDEN);
         }
@@ -121,7 +129,7 @@ final class EventController extends AbstractController
         if (!$image) { 
             return $this->json([
                 'errors' => true, 
-                'message' =>'No file uploaded.', 
+                'message' => Constants::ERROR_NOT_FILE_UPLOADED, 
                 'data' => null
             ], Response::HTTP_BAD_REQUEST);
         }
@@ -136,24 +144,20 @@ final class EventController extends AbstractController
         } catch (\Throwable $e) {
             return $this->json([
                 'errors' => true, 
-                'message' => 'Invalid input format.'
+                'message' => Constants::ERROR_INVALID_FORMAT
             ], Response::HTTP_BAD_REQUEST);
         }
 
         $eventDTO->setImage($image);
-        $errors = $this->validator->validate($eventDTO, null, ['event:validate']);
+        $validatedEvent = $this->validator->validate($eventDTO, null, ['event:validate']);
         
-        if (count($errors) > 0) {
-            $errorList = [];
+        $errors = Helpers::errorsPropertiesValidation($validatedEvent);
 
-            foreach ($errors as $error) {
-                $errorList[$error->getPropertyPath()] = $error->getMessage();
-            }
-
+        if ($errors) {
             return $this->json([
                 'errors' => true, 
-                'message' => $errorList,
-                'data' => null  
+                'message' => $errors, 
+                'data' => null
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -162,7 +166,7 @@ final class EventController extends AbstractController
         if (!$event) {
             return $this->json([
                 'errors' => true, 
-                'message' => 'Event does not exist.',
+                'message' => Constants::ERROR_EVENT_DOESNT_EXITS,
                 'data' => null 
             ], Response::HTTP_NOT_FOUND);
         }
