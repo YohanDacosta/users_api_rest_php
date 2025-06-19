@@ -69,17 +69,12 @@ final class UserController extends AbstractController
         } 
 
         $users = $this->em->getRepository(User::class)->findAll();
-        $serializered = $this->serializer->serialize(
-            $users, 
-            'json', 
-            ['groups' => 'user:read']
-        );
         
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $users
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 
     /** Show an user by ID */
@@ -122,16 +117,10 @@ final class UserController extends AbstractController
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $serializered = $this->serializer->serialize(
-            $user, 
-            'json', 
-            ['groups' => 'user:read']
-        );
-
         return $this->json([
             'errors' => false, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $user
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 
     /** Create an User by ID */
@@ -169,16 +158,10 @@ final class UserController extends AbstractController
         $this->em->persist($user);
         $this->em->flush();
 
-        $serializered = $this->serializer->serialize(
-            $user, 
-            'json', 
-            ['groups' => 'user:read'
-        ]);
-
         return $this->json([
             'errors' => false, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_CREATED);
+            'data' => $user
+        ], Response::HTTP_CREATED, [], ['groups' => 'user:read']);
     }
 
     /** Update an user by ID */
@@ -239,17 +222,11 @@ final class UserController extends AbstractController
         $user->setEmail($userDTO->getEmail());
         $this->em->flush();
 
-        $serializered = $this->serializer->serialize(
-            $user, 
-            'json', 
-            ['groups' => 'user:read']
-        );
-
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $user
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 
     /** Delete an user by ID */
@@ -516,17 +493,11 @@ final class UserController extends AbstractController
         $this->em->persist($user);
         $this->em->flush();
 
-        $serializered = $this->serializer->serialize(
-            $user, 
-            'json', 
-            ['groups' => 'user:read']
-        );
-
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $user
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
     
     /** Unsaved event by user ID and event ID */
@@ -606,13 +577,11 @@ final class UserController extends AbstractController
         $user->removeSavedEvent($event);
         $this->em->flush();
 
-        $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
-
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $user
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 
     /** Add an event to the user's attendee list  */
@@ -685,12 +654,10 @@ final class UserController extends AbstractController
         $this->em->persist($user);
         $this->em->flush();
 
-        $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
-
         return $this->json([
             'errors' => false, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $user
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 
     /** Delete an event to the user's unattendee list  */
@@ -762,12 +729,10 @@ final class UserController extends AbstractController
         $user->removeAttendeeEventsId($event);
         $this->em->flush();
 
-        $serializered = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
-
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $user
+        ], Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 }

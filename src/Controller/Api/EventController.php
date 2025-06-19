@@ -35,17 +35,11 @@ final class EventController extends AbstractController
     {
         $events = $this->em->getRepository(Event::class)->findAll();
 
-        $serializered = $this->serializer->serialize(
-            $events, 
-            'json', 
-            ['groups' => 'event:read']
-        );
-
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_OK);
+            'data' => $events
+        ], Response::HTTP_OK, [], ['groups' => 'event:read']);
     }   
 
     /** Create an event */
@@ -102,14 +96,12 @@ final class EventController extends AbstractController
 
         $this->em->persist($event);
         $this->em->flush();
-
-        $serializered = $this->serializer->serialize($event, 'json', ['groups' => 'event:read']);
         
         return $this->json([
             'errors' => false, 
             'message' => null, 
-            'data' => json_decode($serializered)
-        ], Response::HTTP_CREATED);
+            'data' => $event
+        ], Response::HTTP_CREATED, [], ['groups' => 'event:read']);
     }
 
     /** Upload image by event ID */
