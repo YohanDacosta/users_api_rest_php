@@ -30,9 +30,17 @@ final class EventController extends AbstractController
     }
 
     /** Show all events */
-    #[Route('/event/all', name: 'api_all_events', methods: 'GET')]
-    public function index(): JsonResponse
+    #[Route('/event/all', name: 'api_all_events')]
+    public function index(Request $request): JsonResponse
     {
+        if ($request->getMethod() != 'GET') {
+            return $this->json([
+                'errors' => true,
+                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
+                'data' => null,
+            ], Response::HTTP_METHOD_NOT_ALLOWED);
+        }
+
         $events = $this->em->getRepository(Event::class)->findAll();
 
         return $this->json([
@@ -46,6 +54,14 @@ final class EventController extends AbstractController
     #[Route('/event/create', name: 'api_create_event', methods: 'POST')]
     public function new(Request $request): JsonResponse
     {
+        if ($request->getMethod() != 'POST') {
+            return $this->json([
+                'errors' => true,
+                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
+                'data' => null,
+            ], Response::HTTP_METHOD_NOT_ALLOWED);
+        }
+
         if (!$this->isGranted('ROLE_ADMIN')) {
             return new JsonResponse([
                 'errors' => true, 
@@ -105,9 +121,17 @@ final class EventController extends AbstractController
     }
 
     /** Upload image by event ID */
-    #[Route('/event/upload_image', name: 'api_upload_image_event', methods: ['POST'])]
+    #[Route('/event/upload_image', name: 'api_upload_image_event')]
     public function upload(Request $request): JsonResponse
     {
+        if ($request->getMethod() != 'POST') {
+            return $this->json([
+                'errors' => true,
+                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
+                'data' => null,
+            ], Response::HTTP_METHOD_NOT_ALLOWED);
+        }
+        
         if (!$this->isGranted('ROLE_ADMIN')) {
             return new JsonResponse([
                 'errors' => true, 
