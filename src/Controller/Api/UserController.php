@@ -57,17 +57,9 @@ final class UserController extends AbstractController
     }
 
     /** Show all users */
-    #[Route('/user/all', name: 'api_all_users')]
-    public function index(Request $request): JsonResponse
+    #[Route('/user/all', name: 'api_all_users', methods: ['GET'])]
+    public function index(): JsonResponse
     {
-        if ($request->getMethod() != 'GET') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         if (!$this->isGranted('ROLE_ADMIN')) {
             return $this->json([
                 'errors' => true, 
@@ -86,17 +78,9 @@ final class UserController extends AbstractController
     }
 
     /** Show an user by ID */
-    #[Route('/user/view/{pk}', name: 'api_view_user')]
-    public function detail(Request $request, $pk): JsonResponse
+    #[Route('/user/view/{pk}', name: 'api_view_user', methods: ['GET'])]
+    public function detail($pk): JsonResponse
     {
-        if ($request->getMethod() != 'GET') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         if (!$this->isGranted('ROLE_USER')) {
             return $this->json([
                 'errors' => true, 
@@ -140,22 +124,24 @@ final class UserController extends AbstractController
     }
 
     /** Create an User by ID */
-    #[Route('/user/create', name: 'api_create_user')]
+    #[Route('/user/create', name: 'api_create_user', methods: ['POST'])]
     public function new(Request $request): JsonResponse 
     {
-        if ($request->getMethod() != 'POST') {
+        try {
+            /** @var UserDTO $userDTO */
+            $userDTO = $this->serializer->deserialize(
+                $request->getContent(), 
+                UserDTO::class, 
+                'json'
+            );
+        } catch (\Throwable $e) {
             return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
+                'errors' => true, 
+                'message' => Constants::ERROR_INVALID_FORMAT,
+                'data' => null
+            ], Response::HTTP_BAD_REQUEST);
         }
 
-        $userDTO = $this->serializer->deserialize(
-            $request->getContent(), 
-            UserDTO::class, 
-            'json'
-        );
         $validated = $this->validator->validate(
             $userDTO, 
             null, 
@@ -189,17 +175,9 @@ final class UserController extends AbstractController
     }
 
     /** Update an user by ID */
-    #[Route('/user/edit', name: 'api_edit_user')]
+    #[Route('/user/edit', name: 'api_edit_user', methods: ['PUT'])]
     public function edit(Request $request): JsonResponse
     {
-        if ($request->getMethod() != 'PUT') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         if (!$this->isGranted('ROLE_USER')) {
             return $this->json([
                 'errors' => true, 
@@ -262,17 +240,9 @@ final class UserController extends AbstractController
     }
 
     /** Delete an user by ID */
-    #[Route('/user/delete', name: 'api_delete_user')]
+    #[Route('/user/delete', name: 'api_delete_user', methods: ['POST'])]
     public function delete(Request $request): JsonResponse
     {
-        if ($request->getMethod() != 'DELETE') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         if (!$this->isGranted('ROLE_ADMIN')) {
             return $this->json([
                 'errors' => true, 
@@ -281,16 +251,26 @@ final class UserController extends AbstractController
             ], Response::HTTP_FORBIDDEN);
         }
 
-        $userDTO = $this->serializer->deserialize(
-            $request->getContent(), 
-            UserDTO::class, 
-            'json'
-        );
+        try {
+            /** @var UserDTO $userDTO */
+            $userDTO = $this->serializer->deserialize(
+                $request->getContent(), 
+                UserDTO::class, 
+                'json'
+            );
+        } catch (\Throwable $e) {
+            return $this->json([
+                'errors' => true, 
+                'message' => Constants::ERROR_INVALID_FORMAT,
+                'data' => null
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        
         $validated = $this->validator->validate(
             $userDTO, 
             null, 
-            ['user:validate'
-        ]);
+            ['user:validate']
+        );
 
         $errors = Helpers::errorsPropertiesValidation($validated);
 
@@ -323,17 +303,9 @@ final class UserController extends AbstractController
     }
 
     /** Disable an user by ID */
-    #[Route('/user/disable', name: 'api_disable_user')]
+    #[Route('/user/disable', name: 'api_disable_user', methods: ['POST'])]
     public function disable(Request $request): JsonResponse
     {
-        if ($request->getMethod() != 'POST') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         if (!$this->isGranted('ROLE_USER')) {
             return $this->json([
                 'errors' => true, 
@@ -392,17 +364,9 @@ final class UserController extends AbstractController
     }
 
     /** Upload image by ID */
-    #[Route('/user/upload_image', name: 'api_upload_image_user')]
+    #[Route('/user/upload_image', name: 'api_upload_image_user', methods: ['POST'])]
     public function upload(Request $request): JsonResponse
     {
-        if ($request->getMethod() != 'POST') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         if (!$this->isGranted('ROLE_USER')) {
             return $this->json([
                 'errors' => true, 
@@ -473,17 +437,9 @@ final class UserController extends AbstractController
     }
 
     /** Saved event by user ID and event ID */
-    #[Route('/user/saved_event/{pk}', name: 'api_saved_event')]
+    #[Route('/user/saved_event/{pk}', name: 'api_saved_event', methods: ['GET'])]
     public function saved_event_by_id(Request $request, $pk): JsonResponse
     {
-        if ($request->getMethod() != 'GET') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         $userDTO = new UserDTO();
         $userDTO->setId($pk);
 
@@ -565,17 +521,9 @@ final class UserController extends AbstractController
     }
     
     /** Unsaved event by user ID and event ID */
-    #[Route('/user/unsaved_event/{pk}', name: 'api_unsaved_event')]
+    #[Route('/user/unsaved_event/{pk}', name: 'api_unsaved_event', methods: ['GET'])]
     public function unsaved_event_by_id(Request $request, $pk): JsonResponse
     {
-        if ($request->getMethod() != 'GET') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         $userDTO = new UserDTO();
         $userDTO->setId($pk);
 
@@ -657,17 +605,9 @@ final class UserController extends AbstractController
     }
 
     /** Add an event to the user's attendee list  */
-    #[Route('/user/attendee_event/{pk}', name: 'api_attendee_event')]
+    #[Route('/user/attendee_event/{pk}', name: 'api_attendee_event', methods: ['GET'])]
     public function attendee_event_by_id(Request $request, $pk): JsonResponse
     {
-        if ($request->getMethod() != 'GET') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         $userDTO = new UserDTO();
         $userDTO->setId($pk);
 
@@ -741,17 +681,9 @@ final class UserController extends AbstractController
     }
 
     /** Delete an event to the user's unattendee list  */
-    #[Route('/user/unattended_event/{pk}', name: 'api_unattended_event')]
+    #[Route('/user/unattended_event/{pk}', name: 'api_unattended_event', methods: ['GET'])]
     public function unattended_event_by_id(Request $request, $pk): JsonResponse
     {
-        if ($request->getMethod() != 'GET') {
-            return $this->json([
-                'errors' => true,
-                'message' => Constants::ERROR_METHOD_NOT_ALLOWED,
-                'data' => null,
-            ], Response::HTTP_METHOD_NOT_ALLOWED);
-        }
-
         $userDTO = new UserDTO();
         $userDTO->setId($pk);
 

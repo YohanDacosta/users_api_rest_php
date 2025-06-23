@@ -10,4 +10,5 @@ abstract class Constants
     public const ERROR_NOT_FILE_UPLOADED = 'No file uploaded.';
     public const ERROR_EVENT_DOESNT_EXITS = 'Event not found.';
     public const ERROR_USER_DOESNT_EXITS = 'User not found.';
+    public const ERROR_EMPTY_FIELDS = 'There are empty fields';
 }

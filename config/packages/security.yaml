@@ -15,17 +15,17 @@ security:
       security: false
 
     login:
-      pattern: ^/api/login  
+      pattern: ^/api/login
       stateless: true
-      json_login: 
-          check_path: /api/login
-          username_path: email
-          password_path: password
-          success_handler: lexik_jwt_authentication.handler.authentication_success
-          failure_handler: lexik_jwt_authentication.handler.authentication_failure
+      json_login:
+        check_path: /api/login
+        username_path: email
+        password_path: password
+        success_handler: lexik_jwt_authentication.handler.authentication_success
+        failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
     api:
-      pattern:   ^/api
+      pattern: ^/api
       stateless: true
       jwt: ~
       entry_point: jwt
@@ -43,7 +43,7 @@ security:
     # - { path: ^/profile, roles: ROLE_USER }
     - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: ^/api/user/create, roles: PUBLIC_ACCESS }
-    - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
   # Roles
   role_hierarchy:

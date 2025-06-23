@@ -5,7 +5,7 @@ namespace App\EventListener;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-class AuthenticationSuccessListener {
+class CustomAuthenticationSuccessListener {
 
     /**
      * @param RequestStack $requestStack
@@ -33,6 +33,15 @@ class AuthenticationSuccessListener {
             'isStaff' => $isStaff,
         );
 
-        $event->setData($data);
+        $reponse = array(
+            'errors' => false,
+            'message' => null,
+            'data' => array(
+                'token' => $data['token'],
+                'user' => $data['user'],
+            ),
+        );
+
+        $event->setData($reponse);
     }
 }
